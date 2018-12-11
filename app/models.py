@@ -1,21 +1,22 @@
-from flask_sqlalchemy import SQLAlchemy
-from app.algolia import addArticle
+from peewee import SqliteDatabase, PrimaryKeyField, DateTimeField, IntegerField, FloatField, BooleanField, CharField, Model
+import datetime
 
-db = SQLAlchemy()
+db = SqliteDatabase('bio.db')
+class Base(Model):
+    created_date = DateTimeField(default=datetime.datetime.now)
 
-class Article(db.Model):
-    id = db.Column(db.Integer, primary_key=True, unique=True)
-    title = db.Column(db.String(256), index=True)
-    content = db.Column(db.String(2048), index=True)
-    algoliaId = db.Column(db.Integer, unique=True)
+    class Meta:
+        database = db
 
-    def __repr__(self):
-        return f'Id: {self.id} Title: {self.title}'
-    
-    def __init__(self, uploadAlgolia=True,**kwargs):
+class Data(Base):
+    id = PrimaryKeyField(unique=True)
+    temperature = FloatField()
+    stirringRate = FloatField()
+    ph = FloatField()
 
-        super(Article, self).__init__(**kwargs)
 
-        if(uploadAlgolia):
-            ret = addArticle(self)
-            self.algoliaId = ret['objectID']
+class Instruction(Base):
+    id = PrimaryKeyField(unique=True)
+    instruction = CharField()
+    finished = BooleanField(default=False)
+    finishedDate = DateTimeField(null=True)

@@ -1,0 +1,15 @@
+{
+    "name": "Bioreactor",
+    "description": "This is ENF001F challenge 2",
+    "keywords": [
+      "python",
+      "flask"
+    ],
+    "website": "https://bio.aws.oxifus.com",
+    "success_url": "/",
+    "scripts": {
+      "dokku":{
+        "predeploy": ""
+      }
+    }
+}

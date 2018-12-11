@@ -1,4 +1,26 @@
 body {
-  font-family: "helvetica", sans-serif;
-  text-align: center;
+    font-family: "helvetica", sans-serif;
+    /* text-align: center; */
 }
+
+#controlForm {
+  margin-top: 5ch;
+}
+
+#title {
+
+    margin-top: 1%;
+    margin-bottom: 2%;
+    padding-left: 5ch;
+    padding-right: 5ch;
+    
+
+}
+
+/* #titleText{
+    font-size: 3rem;
+} */
+/* .level-chart {
+    height: 30%;
+} */
+

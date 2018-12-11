@@ -1,51 +1,239 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-<head>
-  <title>Datastore and Firebase Auth Example</title>
-  <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/instantsearch.js@2.10.4/dist/instantsearch.min.css">
-  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/instantsearch.js@2.10.4/dist/instantsearch-theme-algolia.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/instantsearch.js@2.10.4"></script>
-  <script src="{{ url_for('static', filename='script.js') }}" defer></script>
-</head>
-<body>
+    <head>
+        <title>Bioreactor Control Panel</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='bulma.min.css') }}"
+        />
+        <link
+            type="text/css"
+            rel="stylesheet"
+            href="{{ url_for('static', filename='style.css') }}"
+        />
+    </head>
+    <body>
+        {% raw %}
+        <div id="main">
+            <div>
+                <template v-for="(item, index) in notifications">
+                    <div class="notification is-info">
+                        <button
+                            class="delete"
+                            v-on:click="removeNotification(index)"
+                        ></button>
+                        {{ item.message }}
+                    </div>
+                </template>
+            </div>
+            <!--
+                <section class="section">
+                    <div class="container has-text-centered">
+                        <h1 class="title">{{ $t("message.title") }}</h1>
+                    </div>
+                </section>
+            -->
+            <nav class="level" id="title" >
+                <div class="level-left ">
+                    <div class="level-item is-size-3">
+                        <h1>{{ $t("message.title") }}</h1>
+                    </div>
+                </div>
+                <div class="level-right">
+                    <p class="level-item"><a v-on:click="changeLang('fr')">French</a></p>
+                    <p class="level-item"><a v-on:click="changeLang('en')">English</a></p>
+                    <p class="level-item"><a v-on:click="changeLang('sw')">Swahili</a></p>
+                </div>
+            </nav>
+            <nav class="level">
+                <div class="level-item has-text-centered">
+                    <div>
+                        <p class="heading has-text-weight-semibold is-size-6">
+                            {{ $t("message.temperature") }}
+                        </p>
+                        <p class="title has-text-danger is-size-1">
+                            {{ temperature }} <strong>°C</strong>
+                        </p>
+                    </div>
+                </div>
+                <div class="level-item has-text-centered">
+                    <div>
+                        <p class="heading has-text-weight-semibold is-size-6">
+                            {{ $t("message.stirR") }}
+                        </p>
+                        <p class="title has-text-dark is-size-1">
+                            {{ stirringRate }} <strong>RPM</strong>
+                        </p>
+                    </div>
+                </div>
+                <div class="level-item has-text-centered">
+                    <div>
+                        <p class="heading has-text-weight-semibold is-size-6">
+                            pH
+                        </p>
+                        <p class="title has-text-primary is-size-1">{{ pH }}</p>
+                    </div>
+                </div>
+            </nav>
+            <div class="container">
+                <div class="columns">
+                    <div class="column is-centered">
+                        <div><canvas id="tempChart"></canvas></div>
+                    </div>
+                    <div class="column is-centered">
+                        <div><canvas id="stirringChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+            <div class="container">
+                <div class="field is-grouped is-grouped-centered">
+                    <p class="control">
+                        <button
+                            class="button is-primary is-large"
+                            v-on:click="modalActive = true"
+                        >
+                            {{ $t("message.instruction") }}
+                        </button>
+                    </p>
+                </div>
+            </div>
+            <div class="modal" v-bind:class="{ 'is-active' : modalActive }">
+                <div class="modal-background"></div>
+                <div class="modal-card">
+                    <header class="modal-card-head">
+                        <p class="modal-card-title has-text-danger">
+                            {{ $t("message.instruction") }}
+                        </p>
+                        <button
+                            class="delete"
+                            aria-label="close"
+                            v-on:click="modalActive = false, confirmActive = false, stirError = false, tempError = false"
+                        ></button>
+                    </header>
+                    <section class="modal-card-body">
+                        <div class="field">
+                            <label class="label"
+                                >{{ $t("message.temperature") }}
+                                <strong>(°C)</strong></label
+                            >
+                            <div class="control">
+                                <input
+                                    class="input"
+                                    type="text"
+                                    placeholder="25"
+                                    v-model="tempForm"
+                                    v-bind:class="{ 'is-danger': tempError }"
+                                />
+                            </div>
+                            <p
+                                class="help"
+                                v-bind:class="{ 'is-danger': tempError}"
+                            >
+                                {{ $t("message.tempWarn") }}
+                            </p>
+                        </div>
+                        <div class="field">
+                            <label class="label"
+                                >{{ $t("message.stirR") }}
+                                <strong>(RPM)</strong></label
+                            >
+                            <div class="control">
+                                <input
+                                    class="input"
+                                    type="text"
+                                    placeholder="25"
+                                    v-model="stirForm"
+                                    v-bind:class="{ 'is-danger': stirError }"
+                                />
+                            </div>
+                            <p
+                                class="help"
+                                v-bind:class="{ 'is-danger': stirError}"
+                            >
+                                {{ $t("message.stirWarn") }}
+                            </p>
+                        </div>
+                    </section>
+                    <footer class="modal-card-foot">
+                        <button
+                            class="button is-danger"
+                            v-on:click="submitInstruction"
+                        >
+                            {{ $t("message.confirm") }}
+                        </button>
+                        <button
+                            class="button"
+                            v-on:click="modalActive = false, confirmActive = false, confirmActive = false, stirError = false, tempError = false"
+                        >
+                            {{ $t("message.cancel") }}
+                        </button>
+                    </footer>
+                </div>
+            </div>
+            <div class="modal" v-bind:class="{ 'is-active' : confirmActive }">
+                <div class="modal-background"></div>
+                <div class="modal-card">
+                    <header class="modal-card-head">
+                        <p class="modal-card-title has-text-danger">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            {{ $t("message.confirmation") }}
+                        </p>
 
-  <h1>Instant Search</h1>
-  <div id="search-box"></div>
-  <div id="hits"></div>
-  {% raw %}
-  <script>
-    const search = instantsearch({
-      appId: 'QZ178MWVKS',
-      apiKey: 'd85dec6402e2484fb7ffbbcf89866230',
-      indexName: 'dev_flask',
-      routing: true
-    });
-
-    search.addWidget(
-      instantsearch.widgets.hits({
-        container: '#hits',
-        templates: {
-          empty: 'No results!',
-          item: '{{{_highlightResult.title.value}}}'
-        },
-        escapeHits: true,
-        transformItems: items => items.map(item => item)
-      })
-    );
-
-    search.addWidget(
-      instantsearch.widgets.searchBox({
-        container: '#search-box',
-        placeholder: 'Search...'
-      })
-    );
-
-    search.start();
-  
-  </script>
-  {% endraw %}
-        
-
-</body>
+                        <button
+                            class="delete"
+                            aria-label="close"
+                            v-on:click="modalActive = false, confirmActive = false, stirError = false, tempError = false"
+                        ></button>
+                    </header>
+                    <section class="modal-card-body">
+                        <div class="tile is-ancestor">
+                            <article
+                                class="tile is-child notification is-warning"
+                            >
+                                <p class="title">
+                                    {{ $t("message.confirmIns") }}
+                                </p>
+                                <p class="content is-size-3">
+                                    <strong
+                                        class="has-text-black-bis has-test-left"
+                                        >{{ $t("message.temperature") }}:
+                                        {{ tempForm }} °C</strong
+                                    ><br />
+                                    <strong
+                                        class="has-text-black-bis has-test-left"
+                                        >{{ $t("message.stirR") }}:
+                                        {{ stirForm }} RPM</strong
+                                    >
+                                </p>
+                            </article>
+                        </div>
+                    </section>
+                    <footer class="modal-card-foot">
+                        <button
+                            class="button is-danger"
+                            v-on:click="confirmInstruction"
+                        >
+                            {{ $t("message.confirm") }}
+                        </button>
+                        <button
+                            class="button"
+                            v-on:click="modalActive = false, confirmActive = false, stirError = false, tempError = false"
+                        >
+                            {{ $t("message.cancel") }}
+                        </button>
+                    </footer>
+                </div>
+            </div>
+        </div>
+        {% endraw %}
+        <script src="{{ url_for('static', filename='vue.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='vue-i18n.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='Chart.bundle.min.js') }}"></script>
+        <script
+            defer
+            src="{{ url_for('static', filename='all.js') }}"
+        ></script>
+        <script src="{{ url_for('static', filename='main.js') }}"></script>
+    </body>
 </html>

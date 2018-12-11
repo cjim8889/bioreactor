@@ -1,6 +1,5 @@
+.flaskenv
 .gcloudignore
-.git
-.gitignore
+*.db
 __pycache__
 .vscode
-
