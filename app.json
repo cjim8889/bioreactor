@@ -9,7 +9,7 @@
     "success_url": "/",
     "scripts": {
       "dokku":{
-        "predeploy": ""
+        "predeploy": "python migrate.py"
       }
     }
 }
